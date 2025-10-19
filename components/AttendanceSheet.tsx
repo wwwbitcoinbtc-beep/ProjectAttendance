@@ -81,25 +81,41 @@ const AttendanceSheet: React.FC<AttendanceSheetProps> = ({ userRole, members }) 
 
   const handleToggle = useCallback(async (memberId: string, dateGregorian: string) => {
     const key = `${memberId}-${dateGregorian}`;
-    const currentStatus = attendanceMap.get(key) ?? false;
-    const newStatus = !currentStatus;
+    const isPresent = attendanceMap.get(key) ?? false;
 
-    // Optimistic UI update
+    // Optimistically update UI
     const newAttendance = [...attendance];
     const existingRecordIndex = newAttendance.findIndex(r => r.member_id === memberId && r.date === dateGregorian);
-    if(existingRecordIndex > -1) {
-        newAttendance[existingRecordIndex].present = newStatus;
+    
+    if (isPresent) {
+      // Is present, so mark as absent (remove record from local state)
+      if (existingRecordIndex > -1) {
+          newAttendance.splice(existingRecordIndex, 1);
+      }
     } else {
-        newAttendance.push({ member_id: memberId, date: dateGregorian, present: newStatus });
+      // Is absent, so mark as present (add record to local state)
+      const newRecord = { member_id: memberId, date: dateGregorian, present: true };
+       if (existingRecordIndex > -1) { // Should not happen, but for safety
+          newAttendance[existingRecordIndex] = newRecord;
+      } else {
+          newAttendance.push(newRecord);
+      }
     }
     setAttendance(newAttendance);
 
+    // Sync with DB
     try {
-        await db.upsertAttendance([{ member_id: memberId, date: dateGregorian, present: newStatus }]);
-    } catch(e) {
-        alert("خطا در ذخیره حضور و غیاب. لطفا دوباره تلاش کنید.");
-        // Revert UI on failure
-        fetchAttendance();
+      if (isPresent) {
+        // Mark as absent -> DELETE the record
+        await db.deleteSingleAttendance(memberId, dateGregorian);
+      } else {
+        // Mark as present -> UPSERT with present: true
+        await db.upsertAttendance([{ member_id: memberId, date: dateGregorian, present: true }]);
+      }
+    } catch (e) {
+      alert("خطا در ذخیره حضور و غیاب. لطفا دوباره تلاش کنید.");
+      // Revert UI on failure
+      fetchAttendance();
     }
   }, [attendanceMap, fetchAttendance, attendance]);
   

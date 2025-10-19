@@ -77,3 +77,12 @@ export const upsertAttendance = async (records: Pick<AttendanceRecord, 'member_i
         }
     });
 };
+
+/**
+ * Deletes a single attendance record for a specific member on a specific date.
+ * @param memberId The member's ID.
+ * @param date The Gregorian date string (YYYY-MM-DD).
+ */
+export const deleteSingleAttendance = async (memberId: string, date: string): Promise<void> => {
+    await apiClient.delete(`/attendance?member_id=eq.${memberId}&date=eq.${date}`);
+};

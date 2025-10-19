@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Member, BeltColor, Role } from '../types';
 import Modal, { ConfirmModal } from './Modal';
 import { toPersianDigits } from '../utils/persian-utils';
@@ -130,6 +130,16 @@ const MemberList: React.FC<MemberListProps> = ({
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredMembers = useMemo(() => {
+    if (!searchQuery) {
+      return members;
+    }
+    return members.filter(member =>
+      `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [members, searchQuery]);
 
   const openAddModal = () => {
     setEditingMember(null);
@@ -181,6 +191,16 @@ const MemberList: React.FC<MemberListProps> = ({
         </button>
       </div>
 
+      <div className="mb-4">
+        <input
+            type="text"
+            placeholder="جستجوی نام عضو..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
       <div className="bg-white shadow-md rounded-lg overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -193,14 +213,14 @@ const MemberList: React.FC<MemberListProps> = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {members.length === 0 ? (
+            {filteredMembers.length === 0 ? (
                 <tr>
                     <td colSpan={5} className="text-center py-8 text-gray-500">
-                        هیچ عضوی یافت نشد.
+                        {searchQuery ? 'هیچ عضوی با این مشخصات یافت نشد.' : 'هیچ عضوی یافت نشد.'}
                     </td>
                 </tr>
             ) : (
-                members.map(member => (
+                filteredMembers.map(member => (
                   <tr key={member.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.firstName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.lastName}</td>
