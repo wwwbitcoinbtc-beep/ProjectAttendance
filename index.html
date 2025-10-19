@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>اپلیکیشن حضور و غیاب</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Jalaali-js for Shamsi date calculations -->
+  <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.js"></script>
+
+  <!-- Axios for HTTP requests -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <style>
+    /* A simple font setting for better Persian rendering */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    }
+
+    /* Loading Spinner Styles */
+    .lds-ring {
+      color: #3B82F6; /* Tailwind blue-500 for consistency */
+    }
+    .lds-ring,
+    .lds-ring div {
+      box-sizing: border-box;
+    }
+    .lds-ring {
+      display: inline-block;
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+    .lds-ring div {
+      box-sizing: border-box;
+      display: block;
+      position: absolute;
+      width: 64px;
+      height: 64px;
+      margin: 8px;
+      border: 8px solid currentColor;
+      border-radius: 50%;
+      animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+      border-color: currentColor transparent transparent transparent;
+    }
+    .lds-ring div:nth-child(1) {
+      animation-delay: -0.45s;
+    }
+    .lds-ring div:nth-child(2) {
+      animation-delay: -0.3s;
+    }
+    .lds-ring div:nth-child(3) {
+      animation-delay: -0.15s;
+    }
+    @keyframes lds-ring {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Button Spinner Styles */
+    .btn-spinner {
+      /* Match button text color, usually white on dark buttons */
+      color: #ffffff;
+    }
+    .btn-spinner,
+    .btn-spinner div {
+      box-sizing: border-box;
+    }
+    .btn-spinner {
+      display: inline-block;
+      position: relative;
+      width: 20px;
+      height: 20px;
+    }
+    .btn-spinner div {
+      box-sizing: border-box;
+      display: block;
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      margin: 2px;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+      border-color: currentColor transparent transparent transparent;
+    }
+    .btn-spinner div:nth-child(1) {
+      animation-delay: -0.45s;
+    }
+    .btn-spinner div:nth-child(2) {
+      animation-delay: -0.3s;
+    }
+    .btn-spinner div:nth-child(3) {
+      animation-delay: -0.15s;
+    }
+  </style>
+
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "axios": "https://aistudiocdn.com/axios@^1.12.2"
+  }
+}
+</script>
+</head>
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
