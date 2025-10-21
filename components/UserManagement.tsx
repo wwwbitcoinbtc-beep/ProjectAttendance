@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { UserProfile, Role } from '../types';
 import * as auth from '../services/auth';
 import Modal, { ConfirmModal } from './Modal';
 import { toPersianDigits } from '../utils/persian-utils';
 import Spinner, { ButtonSpinner } from './DataManagement';
+import Pagination from './Pagination';
 
 interface UserManagementProps {
     currentUser: UserProfile;
     onUsersChange: () => void;
 }
 
+const ITEMS_PER_PAGE = 10;
 const ASSIGNABLE_ROLES: Role[] = ['senior', 'shian'];
 
 const getRoleDisplayName = (role: Role) => {
@@ -125,6 +127,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser, onUsersCha
     const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
     const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -141,6 +145,27 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser, onUsersCha
     useEffect(() => {
         fetchUsers();
     }, []);
+
+    const filteredUsers = useMemo(() => {
+        if (!searchQuery) {
+            return users;
+        }
+        return users.filter(user =>
+            `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [users, searchQuery]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+
+    const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+
+    const paginatedUsers = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        return filteredUsers.slice(startIndex, endIndex);
+    }, [filteredUsers, currentPage]);
 
     const openAddModal = () => {
         setEditingUser(null);
@@ -204,7 +229,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser, onUsersCha
 
     return (
         <div className="p-4 md:p-6" dir="rtl">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                 <h2 className="text-2xl font-bold text-gray-800">مدیریت کاربران</h2>
                 <button
                     onClick={openAddModal}
@@ -212,6 +237,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser, onUsersCha
                 >
                     افزودن کاربر جدید
                 </button>
+            </div>
+            
+            <div className="mb-4">
+                <input
+                    type="text"
+                    placeholder="جستجوی نام کاربر..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
             </div>
             
             <div className="bg-white shadow-md rounded-lg overflow-x-auto">
@@ -225,20 +260,34 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser, onUsersCha
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {users.map(user => (
-                            <tr key={user.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{toPersianDigits(user.mobile)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getRoleDisplayName(user.role)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
-                                    <button onClick={() => openEditModal(user)} className="text-indigo-600 hover:text-indigo-900 ml-4 disabled:text-gray-300" disabled={user.id === currentUser?.id}>ویرایش</button>
-                                    <button onClick={() => setUserToDelete(user)} className="text-red-600 hover:text-red-900 disabled:text-gray-300" disabled={user.id === currentUser?.id}>حذف</button>
+                        {paginatedUsers.length === 0 ? (
+                           <tr>
+                                <td colSpan={4} className="text-center py-8 text-gray-500">
+                                    {searchQuery ? 'هیچ کاربری با این مشخصات یافت نشد.' : 'هیچ کاربری یافت نشد.'}
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            paginatedUsers.map(user => (
+                                <tr key={user.id}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{toPersianDigits(user.mobile)}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getRoleDisplayName(user.role)}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
+                                        <button onClick={() => openEditModal(user)} className="text-indigo-600 hover:text-indigo-900 ml-4 disabled:text-gray-300" disabled={user.id === currentUser?.id}>ویرایش</button>
+                                        <button onClick={() => setUserToDelete(user)} className="text-red-600 hover:text-red-900 disabled:text-gray-300" disabled={user.id === currentUser?.id}>حذف</button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
+
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+            />
 
             <Modal
                 isOpen={isModalOpen}

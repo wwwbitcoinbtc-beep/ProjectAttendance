@@ -6,9 +6,10 @@ import AttendanceSheet from './components/AttendanceSheet';
 import MemberList from './components/MemberList';
 import Login from './components/Login';
 import UserManagement from './components/UserManagement';
+import Reporting from './components/Reporting';
 import Spinner from './components/DataManagement';
 
-type Tab = 'attendance' | 'members' | 'users';
+type Tab = 'attendance' | 'members' | 'users' | 'reporting';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -122,6 +123,11 @@ const App: React.FC = () => {
           return <UserManagement currentUser={currentUser} onUsersChange={handleUsersChange} />;
         }
         return null;
+       case 'reporting':
+        if (currentUser.role === 'shian') {
+          return <Reporting members={members} />;
+        }
+        return null;
       default:
         return null;
     }
@@ -159,6 +165,14 @@ const App: React.FC = () => {
                   className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'users' ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-200'}`}
                 >
                   مدیریت کاربران
+                </button>
+              )}
+              {currentUser.role === 'shian' && (
+                <button
+                  onClick={() => setActiveTab('reporting')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'reporting' ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-200'}`}
+                >
+                  گزارش گیری
                 </button>
               )}
                <button

@@ -86,3 +86,38 @@ export const upsertAttendance = async (records: Pick<AttendanceRecord, 'member_i
 export const deleteSingleAttendance = async (memberId: string, date: string): Promise<void> => {
     await apiClient.delete(`/attendance?member_id=eq.${memberId}&date=eq.${date}`);
 };
+
+/**
+ * Fetches all attendance records for a specific member within a given date range.
+ * @param memberId The ID of the member.
+ * @param startDate The start date of the range (YYYY-MM-DD Gregorian).
+ * @param endDate The end date of the range (YYYY-MM-DD Gregorian).
+ * @returns A promise that resolves to an array of attendance records.
+ */
+export const getAttendanceForMemberInRange = async (memberId: string, startDate: string, endDate: string): Promise<AttendanceRecord[]> => {
+    const { data } = await apiClient.get('/attendance', {
+        params: {
+            select: '*',
+            member_id: `eq.${memberId}`,
+            date: `gte.${startDate},lte.${endDate}`,
+            order: 'date.asc'
+        }
+    });
+    return data;
+};
+
+/**
+ * Fetches all attendance records for a specific member.
+ * @param memberId The ID of the member.
+ * @returns A promise that resolves to an array of all attendance records for that member.
+ */
+export const getAllAttendanceForMember = async (memberId: string): Promise<AttendanceRecord[]> => {
+    const { data } = await apiClient.get('/attendance', {
+        params: {
+            select: '*',
+            member_id: `eq.${memberId}`,
+            order: 'date.asc'
+        }
+    });
+    return data;
+};

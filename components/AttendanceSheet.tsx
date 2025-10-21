@@ -4,11 +4,14 @@ import { formatToShamsi, parseShamsi } from '../utils/date-formatter';
 import { toPersianDigits } from '../utils/persian-utils';
 import * as db from '../services/db';
 import Spinner from './DataManagement';
+import Pagination from './Pagination';
 
 interface AttendanceSheetProps {
   userRole: Role;
   members: Member[];
 }
+
+const ITEMS_PER_PAGE = 20;
 
 const getPracticeDays = (weekStartDate: Date): string[] => {
   const practiceDays: string[] = [];
@@ -41,6 +44,7 @@ const AttendanceSheet: React.FC<AttendanceSheetProps> = ({ userRole, members }) 
   const [searchQuery, setSearchQuery] = useState('');
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const practiceDaysGregorian = useMemo(() => getPracticeDays(weekStartDate), [weekStartDate]);
   const practiceDaysShamsi = useMemo(() => practiceDaysGregorian.map(d => formatToShamsi(new Date(d))), [practiceDaysGregorian]);
@@ -70,6 +74,20 @@ const AttendanceSheet: React.FC<AttendanceSheetProps> = ({ userRole, members }) 
         `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [members, searchQuery]);
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, weekStartDate]);
+
+  const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE);
+
+  const paginatedMembers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredMembers.slice(startIndex, endIndex);
+  }, [filteredMembers, currentPage]);
+
 
   const attendanceMap = useMemo(() => {
     const map = new Map<string, boolean>(); // Key: "memberId-date"
@@ -192,10 +210,10 @@ const AttendanceSheet: React.FC<AttendanceSheetProps> = ({ userRole, members }) 
                         </div>
                     </td>
                 </tr>
-             ) : filteredMembers.length === 0 ? (
+             ) : paginatedMembers.length === 0 ? (
                 <tr><td colSpan={practiceDaysGregorian.length + (searchQuery ? 2 : 1)} className="text-center py-8 text-gray-500">هیچ عضوی یافت نشد.</td></tr>
             ) : (
-              filteredMembers.map(member => (
+              paginatedMembers.map(member => (
                 <tr key={member.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky right-0 bg-white hover:bg-gray-50 z-10">{`${member.firstName} ${member.lastName}`}</td>
                   {practiceDaysGregorian.map(date => {
@@ -227,6 +245,11 @@ const AttendanceSheet: React.FC<AttendanceSheetProps> = ({ userRole, members }) 
           </tbody>
         </table>
       </div>
+       <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

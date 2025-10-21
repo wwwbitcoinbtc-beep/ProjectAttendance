@@ -3,6 +3,7 @@ import { Member, BeltColor, Role } from '../types';
 import Modal, { ConfirmModal } from './Modal';
 import { toPersianDigits } from '../utils/persian-utils';
 import { ButtonSpinner } from './DataManagement';
+import Pagination from './Pagination';
 
 interface MemberListProps {
   userRole: Role;
@@ -11,6 +12,8 @@ interface MemberListProps {
   onUpdateMember: (updatedMember: Member) => Promise<void>;
   onDeleteMember: (memberId: string) => Promise<void>;
 }
+
+const ITEMS_PER_PAGE = 20;
 
 const BELT_COLORS_ORDERED: BeltColor[] = ['سفید', 'زرد', 'نارنجی', 'سبز', 'آبی', 'قهوه ای', 'مشکی'];
 
@@ -131,6 +134,7 @@ const MemberList: React.FC<MemberListProps> = ({
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredMembers = useMemo(() => {
     if (!searchQuery) {
@@ -140,6 +144,20 @@ const MemberList: React.FC<MemberListProps> = ({
       `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [members, searchQuery]);
+
+  // Reset page to 1 when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE);
+
+  const paginatedMembers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredMembers.slice(startIndex, endIndex);
+  }, [filteredMembers, currentPage]);
+
 
   const openAddModal = () => {
     setEditingMember(null);
@@ -213,14 +231,14 @@ const MemberList: React.FC<MemberListProps> = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredMembers.length === 0 ? (
+            {paginatedMembers.length === 0 ? (
                 <tr>
                     <td colSpan={5} className="text-center py-8 text-gray-500">
                         {searchQuery ? 'هیچ عضوی با این مشخصات یافت نشد.' : 'هیچ عضوی یافت نشد.'}
                     </td>
                 </tr>
             ) : (
-                filteredMembers.map(member => (
+                paginatedMembers.map(member => (
                   <tr key={member.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.firstName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.lastName}</td>
@@ -245,6 +263,12 @@ const MemberList: React.FC<MemberListProps> = ({
           </tbody>
         </table>
       </div>
+
+       <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <Modal
         isOpen={isModalOpen}
