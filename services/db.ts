@@ -6,11 +6,21 @@ import { apiClient } from './supabase'; // Changed from supabase client to apiCl
 export const getMembers = async (): Promise<Member[]> => {
   const { data } = await apiClient.get('/members', {
       params: {
-          select: '*',
+          select: '*,insurance_start_date,insurance_end_date',
           order: 'created_at.asc'
       }
   });
-  return data.map((m: any) => ({...m, firstName: m.first_name, lastName: m.last_name, nationalId: m.national_id, mobile: m.mobile })) as Member[];
+  return data.map((m: any) => ({
+      id: m.id,
+      firstName: m.first_name,
+      lastName: m.last_name,
+      nationalId: m.national_id,
+      mobile: m.mobile,
+      belt: m.belt,
+      created_at: m.created_at,
+      insuranceStartDate: m.insurance_start_date,
+      insuranceEndDate: m.insurance_end_date,
+  })) as Member[];
 };
 
 export const addMember = async (memberData: Omit<Member, 'id'>): Promise<Member> => {
@@ -20,6 +30,8 @@ export const addMember = async (memberData: Omit<Member, 'id'>): Promise<Member>
         national_id: memberData.nationalId,
         mobile: memberData.mobile,
         belt: memberData.belt,
+        insurance_start_date: memberData.insuranceStartDate || null,
+        insurance_end_date: memberData.insuranceEndDate || null,
     };
     const { data } = await apiClient.post('/members', payload, {
         headers: {
@@ -27,7 +39,15 @@ export const addMember = async (memberData: Omit<Member, 'id'>): Promise<Member>
         }
     });
     const newMember = data[0];
-    return { ...newMember, firstName: newMember.first_name, lastName: newMember.last_name, nationalId: newMember.national_id, mobile: newMember.mobile } as Member;
+    return { 
+        ...newMember, 
+        firstName: newMember.first_name, 
+        lastName: newMember.last_name, 
+        nationalId: newMember.national_id, 
+        mobile: newMember.mobile,
+        insuranceStartDate: newMember.insurance_start_date,
+        insuranceEndDate: newMember.insurance_end_date,
+    } as Member;
 };
 
 export const updateMember = async (updatedMember: Member): Promise<Member> => {
@@ -38,6 +58,8 @@ export const updateMember = async (updatedMember: Member): Promise<Member> => {
         national_id: memberData.nationalId,
         mobile: memberData.mobile,
         belt: memberData.belt,
+        insurance_start_date: memberData.insuranceStartDate || null,
+        insurance_end_date: memberData.insuranceEndDate || null,
     };
     const { data } = await apiClient.patch(`/members?id=eq.${id}`, payload, {
         headers: {
@@ -45,7 +67,15 @@ export const updateMember = async (updatedMember: Member): Promise<Member> => {
         }
     });
     const returnedMember = data[0];
-    return { ...returnedMember, firstName: returnedMember.first_name, lastName: returnedMember.last_name, nationalId: returnedMember.national_id, mobile: returnedMember.mobile } as Member;
+    return { 
+        ...returnedMember, 
+        firstName: returnedMember.first_name, 
+        lastName: returnedMember.last_name, 
+        nationalId: returnedMember.national_id, 
+        mobile: returnedMember.mobile,
+        insuranceStartDate: returnedMember.insurance_start_date,
+        insuranceEndDate: returnedMember.insurance_end_date,
+    } as Member;
 };
 
 const deleteAttendanceForMember = async (memberId: string): Promise<void> => {

@@ -13,14 +13,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center" 
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" // Add padding to backdrop for safe area
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4" 
+        className="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col max-h-[90vh]" // Use flex-col and set max-height
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center border-b pb-3 mb-4">
+        <div className="flex justify-between items-center border-b px-6 pt-6 pb-3 flex-shrink-0"> {/* Header part, not scrollable */}
           <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
           <button 
             onClick={onClose} 
@@ -31,13 +31,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
             </svg>
           </button>
         </div>
-        <div>
+        <div className="overflow-y-auto px-6 pb-6 pt-4"> {/* Content part, scrollable */}
           {children}
         </div>
       </div>
     </div>
   );
 };
+
 
 interface ConfirmModalProps {
   isOpen: boolean;

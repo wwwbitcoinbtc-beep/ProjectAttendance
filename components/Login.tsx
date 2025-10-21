@@ -47,7 +47,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         
         <form className="space-y-6" onSubmit={handleSubmit} noValidate>
           <div>
-            <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 text-center">
+            <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 text-right">
               شماره موبایل
             </label>
             <input
@@ -64,7 +64,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             />
           </div>
           <div>
-            <label htmlFor="password"className="block text-sm font-medium text-gray-700 text-center">
+            <label htmlFor="password"className="block text-sm font-medium text-gray-700 text-right">
               رمز عبور
             </label>
             <input

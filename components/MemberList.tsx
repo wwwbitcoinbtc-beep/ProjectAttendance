@@ -4,6 +4,8 @@ import Modal, { ConfirmModal } from './Modal';
 import { toPersianDigits } from '../utils/persian-utils';
 import { ButtonSpinner } from './DataManagement';
 import Pagination from './Pagination';
+import { parseShamsi, formatToShamsi } from '../utils/date-formatter';
+import DatePickerInput from './DatePickerInput';
 
 interface MemberListProps {
   userRole: Role;
@@ -27,6 +29,21 @@ const BELT_COLOR_MAP: Record<BeltColor, string> = {
   'مشکی': '#111827',
 };
 
+const getInsuranceStatus = (member: Member): { text: string; colorClass: string } => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize today's date
+
+    if (member.insuranceStartDate && member.insuranceEndDate) {
+        const startDate = new Date(member.insuranceStartDate);
+        const endDate = new Date(member.insuranceEndDate);
+        if (today >= startDate && today <= endDate) {
+            return { text: 'دارد', colorClass: 'bg-green-100 text-green-800' };
+        }
+    }
+    
+    // In all other cases (expired or not set)
+    return { text: 'ندارد', colorClass: 'bg-red-100 text-red-800' };
+};
 
 const MemberForm: React.FC<{
     member?: Member | null;
@@ -39,6 +56,8 @@ const MemberForm: React.FC<{
         nationalId: '',
         mobile: '',
         belt: 'سفید' as BeltColor,
+        insuranceStartDate: '', // Shamsi date string
+        insuranceEndDate: '', // Shamsi date string
     });
     const [loading, setLoading] = useState(false);
 
@@ -50,6 +69,8 @@ const MemberForm: React.FC<{
                 nationalId: member.nationalId || '',
                 mobile: member.mobile || '',
                 belt: member.belt,
+                insuranceStartDate: member.insuranceStartDate ? formatToShamsi(new Date(member.insuranceStartDate)) : '',
+                insuranceEndDate: member.insuranceEndDate ? formatToShamsi(new Date(member.insuranceEndDate)) : '',
             });
         } else {
             // Reset for new member
@@ -59,6 +80,8 @@ const MemberForm: React.FC<{
                 nationalId: '',
                 mobile: '',
                 belt: 'سفید' as BeltColor,
+                insuranceStartDate: '',
+                insuranceEndDate: '',
             });
         }
     }, [member]);
@@ -72,10 +95,20 @@ const MemberForm: React.FC<{
         e.preventDefault();
         setLoading(true);
         try {
+            // Convert Shamsi dates to Gregorian for DB
+            const startDateGregorian = formData.insuranceStartDate ? parseShamsi(formData.insuranceStartDate)?.toISOString().split('T')[0] : undefined;
+            const endDateGregorian = formData.insuranceEndDate ? parseShamsi(formData.insuranceEndDate)?.toISOString().split('T')[0] : undefined;
+
+            const payload = { 
+                ...formData,
+                insuranceStartDate: startDateGregorian,
+                insuranceEndDate: endDateGregorian
+            };
+
             if (member) {
-                await onSave({ ...member, ...formData });
+                await onSave({ ...member, ...payload });
             } else {
-                await onSave(formData);
+                await onSave(payload);
             }
             onCancel(); // Close modal on success
         } catch (error) {
@@ -88,29 +121,49 @@ const MemberForm: React.FC<{
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4" dir="rtl">
-            <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">نام</label>
-                <input type="text" name="firstName" id="firstName" value={formData.firstName} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">نام</label>
+                    <input type="text" name="firstName" id="firstName" value={formData.firstName} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+                </div>
+                <div>
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">نام خانوادگی</label>
+                    <input type="text" name="lastName" id="lastName" value={formData.lastName} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+                </div>
+                 <div>
+                    <label htmlFor="nationalId" className="block text-sm font-medium text-gray-700">کد ملی</label>
+                    <input type="text" name="nationalId" id="nationalId" value={formData.nationalId} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+                </div>
+                <div>
+                    <label htmlFor="mobile" className="block text-sm font-medium text-gray-700">شماره موبایل</label>
+                    <input type="tel" name="mobile" id="mobile" value={formData.mobile} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+                </div>
+                 <div>
+                    <label htmlFor="belt" className="block text-sm font-medium text-gray-700">کمربند</label>
+                    <select name="belt" id="belt" value={formData.belt} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        {BELT_COLORS_ORDERED.map(color => (
+                            <option key={color} value={color}>{color}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
-            <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">نام خانوادگی</label>
-                <input type="text" name="lastName" id="lastName" value={formData.lastName} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
-            </div>
-            <div>
-                <label htmlFor="nationalId" className="block text-sm font-medium text-gray-700">کد ملی</label>
-                <input type="text" name="nationalId" id="nationalId" value={formData.nationalId} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
-            </div>
-            <div>
-                <label htmlFor="mobile" className="block text-sm font-medium text-gray-700">شماره موبایل</label>
-                <input type="tel" name="mobile" id="mobile" value={formData.mobile} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
-            </div>
-            <div>
-                <label htmlFor="belt" className="block text-sm font-medium text-gray-700">کمربند</label>
-                <select name="belt" id="belt" value={formData.belt} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                    {BELT_COLORS_ORDERED.map(color => (
-                        <option key={color} value={color}>{color}</option>
-                    ))}
-                </select>
+            <div className="border-t pt-4 mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
+                    <label htmlFor="insuranceStartDate" className="block text-sm font-medium text-gray-700">تاریخ شروع بیمه (شمسی)</label>
+                    <DatePickerInput
+                        value={formData.insuranceStartDate}
+                        onChange={(date) => setFormData(prev => ({...prev, insuranceStartDate: date}))}
+                        placeholder="تاریخ را انتخاب کنید"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="insuranceEndDate" className="block text-sm font-medium text-gray-700">تاریخ پایان بیمه (شمسی)</label>
+                    <DatePickerInput
+                        value={formData.insuranceEndDate}
+                        onChange={(date) => setFormData(prev => ({...prev, insuranceEndDate: date}))}
+                        placeholder="تاریخ را انتخاب کنید"
+                    />
+                </div>
             </div>
             <div className="flex justify-end space-x-2 space-x-reverse pt-4">
                 <button type="button" onClick={onCancel} className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">انصراف</button>
@@ -226,8 +279,8 @@ const MemberList: React.FC<MemberListProps> = ({
               <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام</th>
               <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام خانوادگی</th>
               <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">کمربند</th>
-              <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">موبایل</th>
-              <th scope="col" className="relative px-6 py-3"><span className="sr-only">عملیات</span></th>
+              <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت بیمه</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -238,7 +291,9 @@ const MemberList: React.FC<MemberListProps> = ({
                     </td>
                 </tr>
             ) : (
-                paginatedMembers.map(member => (
+                paginatedMembers.map(member => {
+                  const insuranceStatus = getInsuranceStatus(member);
+                  return (
                   <tr key={member.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.firstName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.lastName}</td>
@@ -252,13 +307,30 @@ const MemberList: React.FC<MemberListProps> = ({
                         {member.belt}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{toPersianDigits(member.mobile)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
-                        <button onClick={() => openEditModal(member)} className="text-indigo-600 hover:text-indigo-900 ml-4">ویرایش</button>
-                        <button onClick={() => setMemberToDelete(member)} className="text-red-600 hover:text-red-900">حذف</button>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${insuranceStatus.colorClass}`}>
+                          {insuranceStatus.text}
+                        </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center justify-end space-x-2 space-x-reverse">
+                            <button
+                                onClick={() => openEditModal(member)}
+                                className="px-3 py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600 transition-colors"
+                            >
+                                ویرایش
+                            </button>
+                            <button
+                                onClick={() => setMemberToDelete(member)}
+                                className="px-3 py-1 bg-red-600 text-white text-xs rounded-md hover:bg-red-700 transition-colors"
+                            >
+                                حذف
+                            </button>
+                        </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
             )}
           </tbody>
         </table>

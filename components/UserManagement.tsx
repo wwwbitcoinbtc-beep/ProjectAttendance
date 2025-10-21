@@ -256,7 +256,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser, onUsersCha
                             <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام</th>
                             <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">شماره موبایل</th>
                             <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نقش</th>
-                            <th scope="col" className="relative px-6 py-3"><span className="sr-only">عملیات</span></th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -272,9 +272,23 @@ const UserManagement: React.FC<UserManagementProps> = ({ currentUser, onUsersCha
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{toPersianDigits(user.mobile)}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getRoleDisplayName(user.role)}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
-                                        <button onClick={() => openEditModal(user)} className="text-indigo-600 hover:text-indigo-900 ml-4 disabled:text-gray-300" disabled={user.id === currentUser?.id}>ویرایش</button>
-                                        <button onClick={() => setUserToDelete(user)} className="text-red-600 hover:text-red-900 disabled:text-gray-300" disabled={user.id === currentUser?.id}>حذف</button>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div className="flex items-center justify-end space-x-2 space-x-reverse">
+                                            <button
+                                                onClick={() => openEditModal(user)}
+                                                disabled={user.id === currentUser?.id}
+                                                className="px-3 py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                            >
+                                                ویرایش
+                                            </button>
+                                            <button
+                                                onClick={() => setUserToDelete(user)}
+                                                disabled={user.id === currentUser?.id}
+                                                className="px-3 py-1 bg-red-600 text-white text-xs rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                            >
+                                                حذف
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))

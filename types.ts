@@ -10,6 +10,8 @@ export interface Member {
   mobile: string;
   belt: BeltColor;
   created_at?: string; // Supabase adds this
+  insuranceStartDate?: string; // YYYY-MM-DD Gregorian
+  insuranceEndDate?: string; // YYYY-MM-DD Gregorian
 }
 
 export interface AttendanceRecord {

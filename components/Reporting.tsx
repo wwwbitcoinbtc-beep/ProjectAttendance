@@ -16,6 +16,23 @@ interface ReportData {
   details: { date: string; status: 'حاضر' | 'غایب' }[];
 }
 
+const GLOBAL_START_DATE_SHAMSI = '1404-07-27';
+
+const getInsuranceStatus = (member: Member): { text: string; colorClass: string } => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+
+    if (member.insuranceStartDate && member.insuranceEndDate) {
+        const startDate = new Date(member.insuranceStartDate);
+        const endDate = new Date(member.insuranceEndDate);
+        if (today >= startDate && today <= endDate) {
+            return { text: 'دارد', colorClass: 'text-green-600' };
+        }
+    }
+    
+    return { text: 'ندارد', colorClass: 'text-red-600' };
+};
+
 
 const Reporting: React.FC<{ members: Member[] }> = ({ members }) => {
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -49,24 +66,30 @@ const Reporting: React.FC<{ members: Member[] }> = ({ members }) => {
                     return;
                 }
 
-                // Sort records to safely get start and end dates
+                // Sort records to safely get the last attendance date
                 records.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
                 
-                const startDate = new Date(records[0].date);
+                const calculationStartDate = parseShamsi(GLOBAL_START_DATE_SHAMSI);
+                if (!calculationStartDate) {
+                    throw new Error("Invalid global start date.");
+                }
+
                 const lastAttendanceDate = new Date(records[records.length - 1].date);
                 
                 const presentDates = new Set(records.map(record => record.date));
                 const details: ReportData['details'] = [];
                 let totalPracticeDays = 0;
                 
-                const practiceDayIndices = [0, 2, 4]; // Sunday, Tuesday, Thursday
+                // Practice days are Sunday, Tuesday, Thursday
+                const practiceDayIndices = [0, 2, 4]; 
 
-                // Iterate from the first attendance day to the last
-                let currentDate = new Date(startDate);
+                // Iterate from the global start date to the last recorded attendance
+                let currentDate = new Date(calculationStartDate);
                 currentDate.setHours(0,0,0,0); // Normalize time
                 lastAttendanceDate.setHours(0,0,0,0);
 
                 while (currentDate <= lastAttendanceDate) {
+                    // Check if the current day is a practice day
                     if (practiceDayIndices.includes(currentDate.getDay())) {
                         totalPracticeDays++;
                         const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
@@ -216,7 +239,10 @@ const Reporting: React.FC<{ members: Member[] }> = ({ members }) => {
                         <>
                             <div ref={reportContentRef} className="p-4 bg-white rounded-lg">
                                 <h4 className="text-xl font-bold text-center mb-2">{selectedMember.firstName} {selectedMember.lastName}</h4>
-                                <p className="text-center text-sm text-gray-600 mb-4">گزارش کامل حضور و غیاب</p>
+                                <p className={`text-center text-md font-semibold mb-4 ${getInsuranceStatus(selectedMember).colorClass}`}>
+                                    وضعیت بیمه: {getInsuranceStatus(selectedMember).text}
+                                </p>
+                                <p className="text-center text-sm text-gray-600 mb-4">گزارش حضور و غیاب از تاریخ {toPersianDigits(GLOBAL_START_DATE_SHAMSI)}</p>
 
                                 <div className="grid grid-cols-2 gap-4 my-6 text-center">
                                     <div className="p-3 bg-green-100 rounded-lg">
