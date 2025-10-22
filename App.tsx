@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Member, AttendanceRecord, UserProfile } from './types';
+import { Member, AttendanceRecord, UserProfile, Role } from './types';
 import * as db from './services/db';
 import * as auth from './services/auth';
 import AttendanceSheet from './components/AttendanceSheet';
@@ -10,6 +10,14 @@ import Reporting from './components/Reporting';
 import Spinner from './components/DataManagement';
 
 type Tab = 'attendance' | 'members' | 'users' | 'reporting';
+
+const getRoleDisplayName = (role: Role) => {
+    switch(role) {
+        case 'senior': return 'ارشد';
+        case 'shian': return 'شیهان';
+        default: return role;
+    }
+};
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -143,7 +151,7 @@ const App: React.FC = () => {
                 خوش آمدید، {currentUser.firstName} {currentUser.lastName}
               </h1>
               <p className="text-sm text-gray-500">
-                نقش شما: {currentUser.role === 'shian' ? 'شیان' : 'ارشد'}
+                نقش شما: {getRoleDisplayName(currentUser.role)}
               </p>
             </div>
             <nav className="flex flex-wrap justify-center gap-2">

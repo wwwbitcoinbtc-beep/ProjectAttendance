@@ -17,7 +17,7 @@ const ASSIGNABLE_ROLES: Role[] = ['senior', 'shian'];
 const getRoleDisplayName = (role: Role) => {
     switch(role) {
         case 'senior': return 'ارشد';
-        case 'shian': return 'شیان';
+        case 'shian': return 'شیهان';
         default: return role;
     }
 };
@@ -55,7 +55,7 @@ const UserForm: React.FC<{
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({ ...prev, [name]: value as Role }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
